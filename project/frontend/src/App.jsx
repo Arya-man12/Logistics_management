@@ -92,6 +92,7 @@ function App() {
 
   const currentRole = auth.user?.role || "";
   const selectedShipmentId = selectedShipment?.id || "";
+  const [activePage, setActivePage] = useState("customer");
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(auth));
@@ -348,159 +349,231 @@ function App() {
 
   return (
     <div className="page">
-      <h1>Logistics Platform</h1>
-      <p>Customer, Delivery Agent, and Admin features only.</p>
+      <header className="header">
+        <div>
+          <h1>Logistics Platform</h1>
+          <p>Unified dashboard for customers, agents, and admins.</p>
+        </div>
+        <nav className="navbar">
+          <button
+            type="button"
+            className={`nav-link ${activePage === "customer" ? "active" : ""}`}
+            onClick={() => setActivePage("customer")}
+          >
+            Customer
+          </button>
+          <button
+            type="button"
+            className={`nav-link ${activePage === "agent" ? "active" : ""}`}
+            onClick={() => setActivePage("agent")}
+          >
+            Agent
+          </button>
+          <button
+            type="button"
+            className={`nav-link ${activePage === "admin" ? "active" : ""}`}
+            onClick={() => setActivePage("admin")}
+          >
+            Admin
+          </button>
+        </nav>
+      </header>
 
-      <div className="box">
-        <p>Current role: {currentRole || "none"}</p>
-        {message && <p>{message}</p>}
-        {error && <p className="error">{error}</p>}
+      <div className="statusBar">
+        <div>Current role: <strong>{currentRole || "none"}</strong></div>
+        <div className="statusMessages">
+          {message && <span className="info">{message}</span>}
+          {error && <span className="error">{error}</span>}
+        </div>
       </div>
 
-      <div className="box">
-        <h2>Login and Register</h2>
-        <div className="buttons">
-          <button disabled={!auth.token || loading} onClick={() => void loadProfile()} type="button">Load profile</button>
-          <button disabled={!auth.token || loading} onClick={logout} type="button">Logout</button>
-        </div>
-        <form onSubmit={handleRegister} className="form">
-          <h3>Register</h3>
-          <input placeholder="Name" value={registerForm.name} onChange={(event) => updateForm(setRegisterForm, "name", event.target.value)} />
-          <input placeholder="Email" value={registerForm.email} onChange={(event) => updateForm(setRegisterForm, "email", event.target.value)} />
-          <input placeholder="Password" type="password" value={registerForm.password} onChange={(event) => updateForm(setRegisterForm, "password", event.target.value)} />
-          <select value={registerForm.role} onChange={(event) => updateForm(setRegisterForm, "role", event.target.value)}>
-            <option value="customer">customer</option>
-            <option value="agent">agent</option>
-            <option value="admin">admin</option>
-          </select>
-          <input placeholder="Phone" value={registerForm.phone} onChange={(event) => updateForm(setRegisterForm, "phone", event.target.value)} />
-          <input placeholder="Address" value={registerForm.address} onChange={(event) => updateForm(setRegisterForm, "address", event.target.value)} />
-          <button disabled={loading} type="submit">Register</button>
-        </form>
-        <form onSubmit={handleLogin} className="form">
-          <h3>Login</h3>
-          <input placeholder="Email" value={loginForm.email} onChange={(event) => updateForm(setLoginForm, "email", event.target.value)} />
-          <input placeholder="Password" type="password" value={loginForm.password} onChange={(event) => updateForm(setLoginForm, "password", event.target.value)} />
-          <button disabled={loading} type="submit">Login</button>
-        </form>
-        <pre>{formatJson(profile || {})}</pre>
-      </div>
+      <div className="pageContent">
+        {activePage === "customer" && (
+          <section className="section">
+            <div className="card grid-2">
+              <div>
+                <h2>Account</h2>
+                <div className="buttons">
+                  <button disabled={!auth.token || loading} onClick={() => void loadProfile()} type="button">Load profile</button>
+                  <button disabled={!auth.token || loading} onClick={logout} type="button">Logout</button>
+                </div>
+                <pre>{formatJson(profile || {})}</pre>
+              </div>
 
-      <div className="box">
-        <h2>Customer</h2>
-        <p>Create shipments and track deliveries.</p>
-        <form onSubmit={handleCreateShipment} className="form">
-          <input placeholder="Source address" value={shipmentForm.source_address} onChange={(event) => updateForm(setShipmentForm, "source_address", event.target.value)} />
-          <input placeholder="Destination address" value={shipmentForm.destination_address} onChange={(event) => updateForm(setShipmentForm, "destination_address", event.target.value)} />
-          <input placeholder="Package description" value={shipmentForm.package_description} onChange={(event) => updateForm(setShipmentForm, "package_description", event.target.value)} />
-          <input placeholder="Weight" value={shipmentForm.weight_kg} onChange={(event) => updateForm(setShipmentForm, "weight_kg", event.target.value)} />
-          <input placeholder="Origin hub id" value={shipmentForm.origin_hub_id} onChange={(event) => updateForm(setShipmentForm, "origin_hub_id", event.target.value)} />
-          <input placeholder="Destination hub id" value={shipmentForm.destination_hub_id} onChange={(event) => updateForm(setShipmentForm, "destination_hub_id", event.target.value)} />
-          <select value={shipmentForm.service_type} onChange={(event) => updateForm(setShipmentForm, "service_type", event.target.value)}>
-            <option value="standard">standard</option>
-            <option value="express">express</option>
-          </select>
-          <button disabled={loading || !auth.token} type="submit">Create shipment</button>
-        </form>
-
-        <div className="buttons">
-          <button disabled={!auth.token || loading} onClick={() => void loadShipments()} type="button">Load shipments</button>
-        </div>
-        <form onSubmit={handleTrackingLookup} className="form">
-          <input placeholder="Tracking number" value={trackingNumber} onChange={(event) => setTrackingNumber(event.target.value)} />
-          <button disabled={!auth.token || !trackingNumber || loading} type="submit">Track shipment</button>
-        </form>
-        <div className="simpleList">
-          {shipments.map((shipment) => (
-            <button
-              key={shipment.id || shipment.tracking_number}
-              type="button"
-              className="shipmentButton"
-              onClick={() => {
-                setSelectedShipment(shipment);
-                setTrackingNumber(shipment.tracking_number || "");
-              }}
-            >
-              {shipment.tracking_number} - {shipment.status}
-            </button>
-          ))}
-        </div>
-        <pre>{formatJson(selectedShipment || {})}</pre>
-        <pre>{formatJson(trackingEvents)}</pre>
-      </div>
-
-      <div className="box">
-        <h2>Delivery Agent</h2>
-        <p>Update shipment status.</p>
-        <form onSubmit={handleStatusUpdate} className="form">
-          <input placeholder="Shipment id" value={statusForm.shipment_id} onChange={(event) => updateForm(setStatusForm, "shipment_id", event.target.value)} />
-          <select value={statusForm.status} onChange={(event) => updateForm(setStatusForm, "status", event.target.value)}>
-            <option value="in_transit">in_transit</option>
-            <option value="out_for_delivery">out_for_delivery</option>
-            <option value="delivered">delivered</option>
-            <option value="delayed">delayed</option>
-          </select>
-          <input placeholder="Location" value={statusForm.location} onChange={(event) => updateForm(setStatusForm, "location", event.target.value)} />
-          <input placeholder="Note" value={statusForm.note} onChange={(event) => updateForm(setStatusForm, "note", event.target.value)} />
-          <button disabled={loading || !auth.token || !statusForm.shipment_id} type="submit">Update status</button>
-        </form>
-      </div>
-
-      <div className="box">
-        <h2>Admin</h2>
-        <p>Manage hubs, users, assign agents, and monitor the system.</p>
-
-        <div className="buttons">
-          <button disabled={!auth.token || loading} onClick={() => void loadAdminData()} type="button">Load admin data</button>
-        </div>
-
-        <form onSubmit={handleAssignAgent} className="form">
-          <h3>Assign agent</h3>
-          <input placeholder="Shipment id" value={assignForm.shipment_id} onChange={(event) => updateForm(setAssignForm, "shipment_id", event.target.value)} />
-          <input placeholder="Agent id" value={assignForm.agent_id} onChange={(event) => updateForm(setAssignForm, "agent_id", event.target.value)} />
-          <button disabled={loading || !auth.token || !assignForm.shipment_id || !assignForm.agent_id} type="submit">Assign agent</button>
-        </form>
-
-        <form onSubmit={handleCreateHub} className="form">
-          <h3>Create hub</h3>
-          <input placeholder="Name" value={hubForm.name} onChange={(event) => updateForm(setHubForm, "name", event.target.value)} />
-          <input placeholder="Code" value={hubForm.code} onChange={(event) => updateForm(setHubForm, "code", event.target.value)} />
-          <input placeholder="Address" value={hubForm.address} onChange={(event) => updateForm(setHubForm, "address", event.target.value)} />
-          <input placeholder="City" value={hubForm.city} onChange={(event) => updateForm(setHubForm, "city", event.target.value)} />
-          <input placeholder="State" value={hubForm.state} onChange={(event) => updateForm(setHubForm, "state", event.target.value)} />
-          <input placeholder="Country" value={hubForm.country} onChange={(event) => updateForm(setHubForm, "country", event.target.value)} />
-          <select value={hubForm.status} onChange={(event) => updateForm(setHubForm, "status", event.target.value)}>
-            <option value="active">active</option>
-            <option value="inactive">inactive</option>
-          </select>
-          <button disabled={loading || !auth.token} type="submit">Create hub</button>
-        </form>
-
-        <h3>Users</h3>
-        <div className="simpleList">
-          {users.map((user) => (
-            <div key={user.id} className="itemRow">
-              <span>{user.name} - {user.role}</span>
-              <button disabled={loading || !auth.token} onClick={() => void handleDeleteUser(user.id)} type="button">Delete user</button>
+              <div>
+                <h2>Register</h2>
+                <form onSubmit={handleRegister} className="form">
+                  <input placeholder="Name" value={registerForm.name} onChange={(event) => updateForm(setRegisterForm, "name", event.target.value)} />
+                  <input placeholder="Email" value={registerForm.email} onChange={(event) => updateForm(setRegisterForm, "email", event.target.value)} />
+                  <input placeholder="Password" type="password" value={registerForm.password} onChange={(event) => updateForm(setRegisterForm, "password", event.target.value)} />
+                  <select value={registerForm.role} onChange={(event) => updateForm(setRegisterForm, "role", event.target.value)}>
+                    <option value="customer">customer</option>
+                    <option value="agent">agent</option>
+                    <option value="admin">admin</option>
+                  </select>
+                  <input placeholder="Phone" value={registerForm.phone} onChange={(event) => updateForm(setRegisterForm, "phone", event.target.value)} />
+                  <input placeholder="Address" value={registerForm.address} onChange={(event) => updateForm(setRegisterForm, "address", event.target.value)} />
+                  <button disabled={loading} type="submit">Register</button>
+                </form>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <h3>Hubs</h3>
-        <div className="simpleList">
-          {hubs.map((hub) => (
-            <div key={hub.id} className="itemRow">
-              <span>{hub.name} - {hub.code}</span>
-              <button disabled={loading || !auth.token} onClick={() => void handleDeleteHub(hub.id)} type="button">Delete hub</button>
+            <div className="card grid-2">
+              <div>
+                <h2>Login</h2>
+                <form onSubmit={handleLogin} className="form">
+                  <input placeholder="Email" value={loginForm.email} onChange={(event) => updateForm(setLoginForm, "email", event.target.value)} />
+                  <input placeholder="Password" type="password" value={loginForm.password} onChange={(event) => updateForm(setLoginForm, "password", event.target.value)} />
+                  <button disabled={loading} type="submit">Login</button>
+                </form>
+              </div>
+              <div>
+                <h2>Create Shipment</h2>
+                <form onSubmit={handleCreateShipment} className="form">
+                  <input placeholder="Source address" value={shipmentForm.source_address} onChange={(event) => updateForm(setShipmentForm, "source_address", event.target.value)} />
+                  <input placeholder="Destination address" value={shipmentForm.destination_address} onChange={(event) => updateForm(setShipmentForm, "destination_address", event.target.value)} />
+                  <input placeholder="Package description" value={shipmentForm.package_description} onChange={(event) => updateForm(setShipmentForm, "package_description", event.target.value)} />
+                  <input placeholder="Weight" value={shipmentForm.weight_kg} onChange={(event) => updateForm(setShipmentForm, "weight_kg", event.target.value)} />
+                  <input placeholder="Origin hub id" value={shipmentForm.origin_hub_id} onChange={(event) => updateForm(setShipmentForm, "origin_hub_id", event.target.value)} />
+                  <input placeholder="Destination hub id" value={shipmentForm.destination_hub_id} onChange={(event) => updateForm(setShipmentForm, "destination_hub_id", event.target.value)} />
+                  <select value={shipmentForm.service_type} onChange={(event) => updateForm(setShipmentForm, "service_type", event.target.value)}>
+                    <option value="standard">standard</option>
+                    <option value="express">express</option>
+                  </select>
+                  <button disabled={loading || !auth.token} type="submit">Create shipment</button>
+                </form>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <h3>Agents</h3>
-        <pre>{formatJson(agents)}</pre>
+            <div className="card">
+              <h2>Shipments</h2>
+              <div className="buttons">
+                <button disabled={!auth.token || loading} onClick={() => void loadShipments()} type="button">Load shipments</button>
+              </div>
+              <form onSubmit={handleTrackingLookup} className="form">
+                <input placeholder="Tracking number" value={trackingNumber} onChange={(event) => setTrackingNumber(event.target.value)} />
+                <button disabled={!auth.token || !trackingNumber || loading} type="submit">Track shipment</button>
+              </form>
+              <div className="simpleList">
+                {shipments.map((shipment) => (
+                  <button
+                    key={shipment.id || shipment.tracking_number}
+                    type="button"
+                    className="shipmentButton"
+                    onClick={() => {
+                      setSelectedShipment(shipment);
+                      setTrackingNumber(shipment.tracking_number || "");
+                    }}
+                  >
+                    {shipment.tracking_number} - {shipment.status}
+                  </button>
+                ))}
+              </div>
+              <div className="card compact">
+                <h3>Selected shipment</h3>
+                <pre>{formatJson(selectedShipment || {})}</pre>
+              </div>
+              <div className="card compact">
+                <h3>Tracking events</h3>
+                <pre>{formatJson(trackingEvents)}</pre>
+              </div>
+            </div>
+          </section>
+        )}
 
-        <h3>System report</h3>
-        <pre>{formatJson(report || {})}</pre>
+        {activePage === "agent" && (
+          <section className="section">
+            <div className="card">
+              <h2>Delivery Agent</h2>
+              <p>Update the current shipment status here.</p>
+              <form onSubmit={handleStatusUpdate} className="form">
+                <input placeholder="Shipment id" value={statusForm.shipment_id} onChange={(event) => updateForm(setStatusForm, "shipment_id", event.target.value)} />
+                <select value={statusForm.status} onChange={(event) => updateForm(setStatusForm, "status", event.target.value)}>
+                  <option value="in_transit">in_transit</option>
+                  <option value="out_for_delivery">out_for_delivery</option>
+                  <option value="delivered">delivered</option>
+                  <option value="delayed">delayed</option>
+                </select>
+                <input placeholder="Location" value={statusForm.location} onChange={(event) => updateForm(setStatusForm, "location", event.target.value)} />
+                <input placeholder="Note" value={statusForm.note} onChange={(event) => updateForm(setStatusForm, "note", event.target.value)} />
+                <button disabled={loading || !auth.token || !statusForm.shipment_id} type="submit">Update status</button>
+              </form>
+              <p className="hint">Tip: use the Customer tab to pick a shipment and then copy its ID here.</p>
+            </div>
+          </section>
+        )}
+
+        {activePage === "admin" && (
+          <section className="section">
+            <div className="card grid-2">
+              <div>
+                <h2>Admin controls</h2>
+                <div className="buttons">
+                  <button disabled={!auth.token || loading} onClick={() => void loadAdminData()} type="button">Load admin data</button>
+                </div>
+                <form onSubmit={handleAssignAgent} className="form">
+                  <h3>Assign Agent</h3>
+                  <input placeholder="Shipment id" value={assignForm.shipment_id} onChange={(event) => updateForm(setAssignForm, "shipment_id", event.target.value)} />
+                  <input placeholder="Agent id" value={assignForm.agent_id} onChange={(event) => updateForm(setAssignForm, "agent_id", event.target.value)} />
+                  <button disabled={loading || !auth.token || !assignForm.shipment_id || !assignForm.agent_id} type="submit">Assign agent</button>
+                </form>
+              </div>
+
+              <div>
+                <h3>Create Hub</h3>
+                <form onSubmit={handleCreateHub} className="form">
+                  <input placeholder="Name" value={hubForm.name} onChange={(event) => updateForm(setHubForm, "name", event.target.value)} />
+                  <input placeholder="Code" value={hubForm.code} onChange={(event) => updateForm(setHubForm, "code", event.target.value)} />
+                  <input placeholder="Address" value={hubForm.address} onChange={(event) => updateForm(setHubForm, "address", event.target.value)} />
+                  <input placeholder="City" value={hubForm.city} onChange={(event) => updateForm(setHubForm, "city", event.target.value)} />
+                  <input placeholder="State" value={hubForm.state} onChange={(event) => updateForm(setHubForm, "state", event.target.value)} />
+                  <input placeholder="Country" value={hubForm.country} onChange={(event) => updateForm(setHubForm, "country", event.target.value)} />
+                  <select value={hubForm.status} onChange={(event) => updateForm(setHubForm, "status", event.target.value)}>
+                    <option value="active">active</option>
+                    <option value="inactive">inactive</option>
+                  </select>
+                  <button disabled={loading || !auth.token} type="submit">Create hub</button>
+                </form>
+              </div>
+            </div>
+
+            <div className="card grid-2">
+              <div>
+                <h3>Users</h3>
+                <div className="simpleList">
+                  {users.map((user) => (
+                    <div key={user.id} className="itemRow">
+                      <span>{user.name} - {user.role}</span>
+                      <button disabled={loading || !auth.token} onClick={() => void handleDeleteUser(user.id)} type="button">Delete</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3>Hubs</h3>
+                <div className="simpleList">
+                  {hubs.map((hub) => (
+                    <div key={hub.id} className="itemRow">
+                      <span>{hub.name} - {hub.code}</span>
+                      <button disabled={loading || !auth.token} onClick={() => void handleDeleteHub(hub.id)} type="button">Delete</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="card grid-2">
+              <div>
+                <h3>Agents</h3>
+                <pre>{formatJson(agents)}</pre>
+              </div>
+              <div>
+                <h3>System report</h3>
+                <pre>{formatJson(report || {})}</pre>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

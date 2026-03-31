@@ -11,7 +11,10 @@ class Settings:
         "Backend API for shipment creation, assignment, tracking, and hub management.",
     )
     api_prefix: str = os.getenv("API_PREFIX", "/api")
-    mongo_uri: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    mongo_uri: str = os.getenv(
+        "MONGO_URI",
+        "mongodb+srv://admin:12345@cluster0.vez0snx.mongodb.net/",
+    )
     mongo_db: str = os.getenv("MONGO_DB", "logistics_db")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     secret_key: str = os.getenv("SECRET_KEY", "change-me-in-production")

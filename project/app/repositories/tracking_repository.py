@@ -1,27 +1,22 @@
-﻿import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from pymongo import MongoClient
 
-
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-MONGO_DB = os.getenv("MONGO_DB", "logistics_db")
+from app.core.config import settings
+from app.core.database import get_database
+from app.utils.helpers import normalize_document
 
 
 class TrackingRepository:
     def __init__(self, client: Optional[MongoClient] = None):
-        self.client = client or MongoClient(MONGO_URI)
-        self.db = self.client[MONGO_DB]
+        self.client = client
+        self.db = client[settings.mongo_db] if client is not None else get_database()
         self.collection = self.db["tracking_updates"]
 
     def _serialize(self, document: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        if not document:
-            return None
-        document["id"] = str(document["_id"])
-        document.pop("_id", None)
-        return document
+        return normalize_document(document)
 
     def list_tracking(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
         cursor = self.collection.find().skip(skip).limit(limit)
